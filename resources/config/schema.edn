@@ -1,0 +1,1268 @@
+
+{
+
+ :fields-for-all-records [
+                          {
+                           :name :community-item-name
+                           :type :hyperlink-value
+                           :note "Every question needs to belong to a particular community, such as Wordpress or SEO."
+			   :important-to-show-in-lists true
+                           }
+                          {
+                           :name :item-name
+                           :note "Secret name used internally by the software. Do not change this."
+                           }
+                          {
+                           :name :item-type
+                           :note "The type of the record, used internally by the software. Do not change this."
+			   :important-to-show-in-lists true
+                           }
+                          {
+                           :name :previous-item-name
+                           :note "This is the name of the current version of this item. If this recorded was edited, then this backup was made to keep track of old versions."
+                           } 
+                          {
+                           :name :this-user-is-disabled
+                           :type :radios
+                           :datatype :boolean
+                           :options [true false]	
+                           :note " if a user has been downvoted or caught cheating, we disable their account and disable all of their posts and answers and discourse "
+                           }                           
+                          {
+                           :name :scheduled-for-deletion
+                           :type :radios
+                           :datatype :boolean
+                           :options [true false]
+                           :note " if marked yes, this item will soon deleted? "
+                           }                           
+                          {
+                           :name :is-private
+                           :type :radios
+                           :datatype :boolean
+                           :options [true false]
+                           :note " if marked yes, then this item should only be seen by the owner and the admins "            
+                           }                            
+                          {
+                           :name :file-1
+                           :type :file
+                           :note "Attach up to 3 files or images"
+                           :datatype :file
+                           }
+                          {
+                           :name :file-2
+                           :type :file
+                           :note "Attach up to 3 files or images"
+                           :datatype :file
+                           }
+                          {
+                           :name :file-3
+                           :type :file
+                           :note "Attach up to 3 files or images"
+                           :datatype :file
+                           }
+                          {
+                           :name :admin-note
+                           :note "If an admin edits this record, they should say why."
+                           }
+                          {
+                           :name :created-at
+                           :type :datetime-select
+                           :note "When was this item first created?"
+                           :year-start 1950
+                           :year-end 2030
+                           :important-to-show-in-lists true
+                           :datatype :date
+                           :ampm false
+                           :seconds false
+                           :timezone "US/Eastern" 
+                           }
+                          {
+                           :name :updated-at
+                           :type :datetime-select
+                           :note "When was this item most recently modified?"
+                           :year-start 1950
+                           :year-end 2030
+                           :important-to-show-in-lists true
+                           :datatype :date
+                           :ampm false
+                           :seconds false
+                           :timezone "US/Eastern"
+                           }
+                          {
+                           :name :_id
+                           :note "The id assigned by the database. Do not change this."
+                           }
+                          {
+                           :name :machine-cookie-item-name
+                           :note "The unique id that we assigned to the computer of this user, via putting a cookie on their computer."
+                           }
+                          ]
+
+ :answers {
+           :action "/admin/process-input/"
+           :fields [
+                    {
+                     :name :user-item-name
+                     :type :hyperlink-value
+                     :important-to-show-in-lists true
+                     } 
+                    {
+                     :name :question-item-name
+                     :type :hyperlink-value
+                     :note "Which question does this belong to?"
+                     :important-to-show-in-lists true
+                     }
+                    {
+                     :name :prize-amount-paid-for-this-answer
+                     :type :currency
+                     :note "The prize amount (if any) that was eventually paid for this answer."
+                     :datatype :decimal
+                     :important-to-show-in-lists true
+                     }
+                    {
+                     :name :description
+                     :type :textarea
+                     :note "The answer"
+                     }
+                    ]
+           :validations [
+                         [:required [:item-name :item-type :user-item-name :question-item-name]]
+                         ]
+           :values {
+                    :community-item-name "all"
+                    :item-type :answers
+                    } 
+           :enctype "multipart/form-data"
+           }
+
+ :captchas {
+            :action "/admin/process-input/"
+            :fields [
+                     {
+                      :name :captcha
+                      :note "The id that had to be matched:"
+                      }
+                     ]
+            :validations []
+            :values {
+                     :community-item-name "all"
+                     :item-type :captcha
+                     } 
+            :enctype "multipart/form-data"
+            }
+
+ :communities {
+               :action "/admin/process-input/"
+               :fields [
+                        {
+                         :name :user-item-name
+                         :type :hyperlink-value
+                         :important-to-show-in-lists true
+                         } 
+                        {
+                         :name :subject
+                         :type :textarea
+                         :note "What is the name of this community?"
+                         :important-to-show-in-lists true
+                         }
+                        {
+                         :name :description
+                         :type :textarea
+                         :note "What is this community about? Keep it short (less than 300 characters)"
+                         }
+                        ]
+               :validations [
+                             [:required [:user-item-name]]
+                             ]
+               :values {
+                        :community-item-name "all"
+                        :item-type :communities                        
+                        :user-item-name "tma-admin"
+                        } 
+               :enctype "multipart/form-data"
+               }
+
+ :discourses {
+              :action "/admin/process-input/"
+              :fields [
+                       {
+                        :name :user-item-name
+                        :type :hyperlink-value
+                        :important-to-show-in-lists true
+                        } 
+                       {
+                        :name :description
+                        :type :textarea
+                        :note " Discourse: "
+                        }
+                       {
+                        :name :in-response-to-item-name
+                        :type :hyperlink-value
+                        :note " if this was in reply to something "
+                        }
+                       ]
+              :validations [
+                            [:required [:item-name :item-type :user-item-name]]
+                            ]
+              :values {
+                       :community-item-name "all"
+                       :item-type :discourses 
+                       } 
+              :enctype "multipart/form-data"               
+              }
+
+ :draft-questions {
+                   :action "/admin/process-input/"
+                   :fields [
+                            {
+                             :name :machine-cookie-item-name
+                             :type :hyperlink-value
+                             } 
+                            {
+                             :name :subject
+                             :note "The question headline"
+                             :important-to-show-in-lists true
+                             }
+                            {
+                             :name :description
+                             :type :textarea
+                             :note "Details about the question"
+                             }
+                            {
+                             :name :prize-amount
+                             :type :currency
+                             :note " prize-amount "
+                             :datatype :decimal
+                             }
+                            ]
+                   :validations [
+                                 [:required [:item-name :item-type :subject :community-item-name :session-id]]
+                                 ]
+                   :values {
+                            :community-item-name "all"
+                            :item-type :draft-questions 
+                            } 
+                   :enctype "multipart/form-data"                    
+                   }
+
+ :experts-suggest_ideal-prize-for-questions {
+
+                                             :action "/admin/process-input/"
+                                             :fields [
+                                                      {
+                                                       :name :user-item-name
+                                                       :type :hyperlink-value
+                                                       :important-to-show-in-lists true
+                                                       } 
+                                                      {
+                                                       :name :suggestion
+                                                       :type :currency
+                                                       :note "amount of money suggested "
+                                                       :datatype :decimal
+                                                       :important-to-show-in-lists true
+                                                       }
+                                                      ]
+                                             :validations [
+                                                           [:required [:item-name :item-type :user-item-name]]
+                                                           ]
+                                             :values {
+                                                      :community-item-name "all"
+                                                      :item-type :experts-suggest-ideal-prize-for-questions
+                                                      } 
+                                             :enctype "multipart/form-data"
+                                             }
+
+ :forgive-downvotes {
+                     :action "/admin/process-input/"
+                     :fields [
+                              {
+                               :name :user-item-name
+                               :type :hyperlink-value
+                               :note " this is the item-name of the user whose downvotes we are alleviating "
+                               :important-to-show-in-lists true
+                               }
+                              {
+                               :name :how-many-downvotes-should-we-forgive
+                               :datatype :int
+                               }
+                              ]
+                     :validations [
+                                   [:required [:item-name :item-type :user-item-name-to-be-forgiven]]
+                                   ]
+                     :values {
+                              :community-item-name "all"
+                              :item-type :forgive-downvotes
+                              } 
+                     :enctype "multipart/form-data"                     
+                     }
+
+ :files {
+
+         :action "/admin/process-input/"
+         :fields [
+                  {
+                   :name :user-item-name
+                   :type :hyperlink-value
+                   :important-to-show-in-lists true
+                   }
+                  {
+                   :name :file-name
+                   :important-to-show-in-lists true
+                   }
+                  {
+                   :name :description
+                   :type :textarea
+                   }
+                  {
+                   :name :tags
+                   }
+                  {
+                   :name :in-response-to-item-name
+                   :type :hyperlink-value
+                   :note " the document this belongs to "
+                   }
+                  ]
+         :validations [
+                       [:required [:item-name :item-type :user-item-name]]
+                       ]
+         :values {
+                  :community-item-name "all"
+                  :item-type :files
+                  } 
+         :enctype "multipart/form-data"          
+         }
+
+ :messages {
+
+            :action "/admin/process-input/"
+            :fields [
+                     {
+                      :name :user-item-name
+                      :type :hyperlink-value
+                      :important-to-show-in-lists true
+                      } 
+                     {
+                      :name :recipient-user-item-name
+                      :type :hyperlink-value
+                      :important-to-show-in-lists true
+                      } 
+                     {
+                      :name :in-response-to-item-name
+                      :type :hyperlink-value
+                      :note " if this was in reply to a previous message "
+                      }
+                     {
+                      :name :description
+                      :type :textarea
+                      :note " The message "
+                      }
+                     ]
+            :validations [
+                          [:required [:item-name :item-type :recipient-user-item-name :user-item-name]]
+                          ]
+            :values {
+                     :community-item-name "all"
+                     :item-type :messages 
+                     } 
+            :enctype "multipart/form-data"             
+            }
+
+ :payments-that-tma-receives {
+
+                              :action "/admin/process-input/"
+                              :fields [
+                                       {
+                                        :name :user-item-name
+                                        :type :hyperlink-value
+                                        :important-to-show-in-lists true
+                                        } 
+                                       {
+                                        :name :amount
+                                        :type :currency
+                                        :note "The amount that the user sent to TMA. This goes into the user's non-gift-credit cash account."
+                                        :datatype :decimal
+                                        :important-to-show-in-lists true
+                                        }
+                                       {
+                                        :name :paypal-transaction-id
+                                        }
+                                       ]
+                              :validations [
+                                            [:required [:item-name :item-type :user-item-name :amount]]
+                                            ]
+                              :values {
+                                       :community-item-name "all"
+                                       :item-type :payment-that-tma-receives
+                                       } 
+                              :enctype "multipart/form-data"                                
+                              }
+
+ :payments-of-fees-charged-by-tma-in-exchange-for-posting-a-question {
+
+                                                                      :action "/admin/process-input/"
+                                                                      :fields [
+                                                                               {
+                                                                                :name :question-item-name
+                                                                                :type :hyperlink-value
+                                                                                :important-to-show-in-lists true
+                                                                                }
+                                                                               {
+                                                                                :name :amount
+                                                                                :type :currency
+                                                                                :note "Of the fee that TMA charges for posting a question, this is the amount that goes to the community owner, not the Community Pot and not the Peer Review Fund. This is $0.50 cents. "
+                                                                                :datatype :decimal
+                                                                                :important-to-show-in-lists true
+                                                                                }
+                                                                               ]
+                                                                      :validations [
+                                                                                    [:required [:item-name :item-type :question-item-name :amount]]
+                                                                                    ]
+                                                                      :values {
+                                                                               :community-item-name "all"
+                                                                               :item-type :payments-transfered-to-tma-in-exchange-for-posting-a-question
+                                                                               } 
+                                                                      :enctype "multipart/form-data"                                
+                                                                      }
+
+ :payments-of-fees-charged-by-tma-in-exchange-for-making-a-question-private {
+
+                                                                             :action "/admin/process-input/"
+                                                                             :fields [
+                                                                                      {
+                                                                                       :name :question-item-name
+                                                                                       :type :hyperlink-value
+                                                                                       :important-to-show-in-lists true
+                                                                                       }
+                                                                                      {
+                                                                                       :name :amount
+                                                                                       :type :currency
+                                                                                       :note "TMA charges $0.25 cents to make a question private. This money goes to the community owner."
+                                                                                       :datatype :decimal
+                                                                                       :important-to-show-in-lists true
+                                                                                       }
+                                                                                      ]
+                                                                             :validations [
+                                                                                           [:required [:item-name :item-type :question-item-name :amount]]
+                                                                                           ]
+                                                                             :values {
+                                                                                      :community-item-name "all"
+                                                                                      :item-type :payments-transfered-to-tma-in-exchange-for-making-a-question-private
+                                                                                      } 
+                                                                             :enctype "multipart/form-data"                                
+                                                                             }
+
+ :payments-transfered-to-donation-fund-from-questions {
+
+                                                       :action "/admin/process-input/"
+                                                       :fields [
+                                                                {
+                                                                 :name :question-item-name
+                                                                 :type :hyperlink-value
+                                                                 :important-to-show-in-lists true
+                                                                 } 
+                                                                {
+                                                                 :name :amount
+                                                                 :type :currency
+                                                                 :note "The donation fund consists of those donations that come from questions, and those donations we call 'pure donations' as they come straight from a user who is being generous. Money that is donated is then divided: 50% goes to the Community Owner, 25% goes to the Community Pot, and 25% goes the Peer Review Fund. But we first record the donation, before dividing it up. Be careful not to double count this money: if you count this money and then the money in the other funds, you are double counting it."
+                                                                 :datatype :decimal
+                                                                 :important-to-show-in-lists true
+                                                                 }
+                                                                ]
+                                                       :validations [
+                                                                     [:required [:item-name :item-type :amount :question-item-name]]
+                                                                     ]
+                                                       :values {
+                                                                :community-item-name "all"
+                                                                :item-type :payments-transfered-to-donation-fund-from-questions
+                                                                } 
+                                                       :enctype "multipart/form-data"
+                                                       }
+
+ :payments-transfered-to-donation-fund-from-pure-donations {
+
+                                                            :action "/admin/process-input/"
+                                                            :fields [
+                                                                     {
+                                                                      :name :user-item-name
+                                                                      :type :hyperlink-value
+                                                                      :important-to-show-in-lists true
+                                                                      } 
+                                                                     {
+                                                                      :name :amount
+                                                                      :type :currency
+                                                                      :note "We need to record donations. The donation fund consists of those donations that come from questions, and those donations we call 'pure donations' as they come straight from a user who is being generous. Money that is donated is then divided: 50% goes to the Community Owner, 25% goes to the Community Pot, and 25% goes the Peer Review Fund. But we first record the donation, before dividing it up. Be careful not to double count this money: if you count this money and then the money in the other funds, you are double counting it."
+                                                                      :datatype :decimal
+                                                                      :important-to-show-in-lists true
+                                                                      }
+                                                                     ]
+                                                            :validations [
+                                                                          [:required [:item-name :item-type :amount :user-item-name]]
+                                                                          ]
+                                                            :values {
+                                                                     :community-item-name "all"
+                                                                     :item-type :payments-transfered-to-donation-fund-from-pure-donations
+                                                                     } 
+                                                            :enctype "multipart/form-data"
+                                                            }
+
+ :payments-transfered-to-peer-review-fund-from-question {
+
+                                                         :action "/admin/process-input/"
+                                                         :fields [
+                                                                  {
+                                                                   :name :question-item-name
+                                                                   :type :hyperlink-value
+                                                                   :note "The money for this transfer comes from a question. The Peer Review Fund consists of those payments that come from questions, and those payments that come from donations."
+                                                                   :important-to-show-in-lists true
+                                                                   }
+                                                                  {
+                                                                   :name :amount
+                                                                   :type :currency
+                                                                   :note "Amount added to Peer Review Fund"
+                                                                   :datatype :decimal
+                                                                   :important-to-show-in-lists true
+                                                                   }
+                                                                  ]
+                                                         :validations [
+                                                                       [:required [:item-name :item-type :amount :question-item-name]]
+                                                                       ]
+                                                         :values {
+                                                                  :community-item-name "all"
+                                                                  :item-type :payments-transfered-to-peer-review-fund-from-question 
+                                                                  } 
+                                                         :enctype "multipart/form-data"
+                                                         }
+
+ :payments-transfered-to-peer-review-fund-from-donation {
+
+                                                         :action "/admin/process-input/"
+                                                         :fields [
+                                                                  {
+                                                                   :name :donation-item-name
+                                                                   :type :hyperlink-value
+                                                                   :note "The money for this transfer comes from a donation. The Peer Review Fund consists of those payments that come from questions, and those payments that come from donations."
+                                                                   }
+                                                                  {
+                                                                   :name :amount
+                                                                   :type :currency
+                                                                   :note "Amount added to Peer Review Fund"
+                                                                   :datatype :decimal
+                                                                   :important-to-show-in-lists true
+                                                                   }
+                                                                  ]
+                                                         :validations [
+                                                                       [:required [:item-name :item-type :amount :donation-item-name]]
+                                                                       ]
+                                                         :values {
+                                                                  :community-item-name "all"
+                                                                  :item-type :payments-transfered-to-peer-review-fund-from-donation 
+                                                                  } 
+                                                         :enctype "multipart/form-data"
+                                                         }
+
+ :payments-transfered-to-community-pot-from-questions {
+
+                                                       :action "/admin/process-input/"
+                                                       :fields [
+                                                                {
+                                                                 :name :question-item-name
+                                                                 :type :hyperlink-value
+                                                                 :note "The money for this transfer comes from a question. Each Community Pot consists of payments from questions and payments from donations."
+                                                                 :important-to-show-in-lists true
+                                                                 }
+                                                                {
+                                                                 :name :amount
+                                                                 :type :currency
+                                                                 :note "Amount added to this community pot"
+                                                                 :datatype :decimal
+                                                                 :important-to-show-in-lists true
+                                                                 }
+                                                                ]
+                                                       :validations [
+                                                                     [:required [:item-name :item-type :community-item-name :question-item-name :amount]]
+                                                                     ]
+                                                       :values {
+                                                                :community-item-name "all"
+                                                                :item-type :payments-transfered-to-community-pot-from-questions 
+                                                                } 
+                                                       :enctype "multipart/form-data"
+                                                       }
+
+ :payments-transfered-to-community-pot-from-donation {
+
+                                                      :action "/admin/process-input/"
+                                                      :fields [
+                                                               {
+                                                                :name :donation-item-name
+                                                                :type :hyperlink-value
+                                                                :note "The money for this transfer comes from a donation. Each Community Pot consists of payments from questions and payments from donations."
+                                                                }
+                                                               {
+                                                                :name :amount
+                                                                :type :currency
+                                                                :note "Amount added to this community pot"
+                                                                :datatype :decimal
+                                                                :important-to-show-in-lists true
+                                                                }
+                                                               ]
+                                                      :validations [
+                                                                    [:required [:item-name :item-type :community-item-name :donation-item-name :amount]]
+                                                                    ]
+                                                      :values {
+                                                               :community-item-name "all"
+                                                               :item-type :payments-transfered-to-community-pot-from-donations 
+                                                               } 
+                                                      :enctype "multipart/form-data"
+                                                      }
+
+ :payments-transfered-to-community-owner {
+
+                                          :action "/admin/process-input/"
+                                          :fields [
+                                                   {
+                                                    :name :user-item-name
+                                                    :type :hyperlink-value
+                                                    :important-to-show-in-lists true
+                                                    } 
+                                                   {
+                                                    :name :amount
+                                                    :type :currency
+                                                    :note "Any money that is sent to a community owner should be recorded here. These records will be automatic if the community owner allows automated PayPal payements or automated bank transfers, but if the community owner requires that we send them a paper check via snail mail, then these records will need to be manual."
+                                                    :datatype :decimal
+                                                    :important-to-show-in-lists true
+                                                    }
+                                                   ]
+                                          :validations [
+                                                        [:required [:item-name :item-type :amount :user-item-name]]
+                                                        ]
+                                          :values {
+                                                   :community-item-name "all"
+                                                   :item-type :payments-transfered-to-community-owner 
+                                                   } 
+                                          :enctype "multipart/form-data"
+                                          }
+
+ :payments-transfered-to-a-user-because-of-an-answer-they-gave {
+
+                                                                :action "/admin/process-input/"
+                                                                :fields [
+                                                                         {
+                                                                          :name :user-item-name
+                                                                          :type :hyperlink-value
+                                                                          :important-to-show-in-lists true
+                                                                          } 
+                                                                         {
+                                                                          :name :amount
+                                                                          :type :currency
+                                                                          :note "Any money that is sent to a community owner should be recorded here. These records will be automatic if the community owner allows automated PayPal payements or automated bank transfers, but if the community owner requires that we send them a paper check via snail mail, then these records will need to be manual."
+                                                                          :datatype :decimal
+                                                                          :important-to-show-in-lists true
+                                                                          }
+                                                                         ]
+                                                                :validations [
+                                                                              [:required [:item-name :item-type :user-item-name :amount]]
+                                                                              ]
+                                                                :values {
+                                                                         :community-item-name "all"
+                                                                         :item-type :payments-transfered-to-a-user-because-of-an-answer-they-gave 
+                                                                         } 
+                                                                :enctype "multipart/form-data"
+                                                                }
+
+ :payments-transfered-to-user-because-of-community-pot {
+
+                                                        :action "/admin/process-input/"
+                                                        :fields [
+                                                                 {
+                                                                  :name :recipient-user-item-name
+                                                                  :type :hyperlink-value
+                                                                  :important-to-show-in-lists true
+                                                                  }
+                                                                 {
+                                                                  :name :amount
+                                                                  :type :currency
+                                                                  :note "Every transfer to a user account from a Community Pot."
+                                                                  :datatype :decimal
+                                                                  :important-to-show-in-lists true
+                                                                  }
+                                                                 ]
+                                                        :validations [
+                                                                      [:required [:item-name :item-type :community-item-name :amount :recipient-user-item-name]]
+                                                                      ]
+                                                        :values {
+                                                                 :community-item-name "all"
+                                                                 :item-type :payments-transfered-to-user-because-of-community-pot 
+                                                                 } 
+                                                        :enctype "multipart/form-data"
+                                                        }
+
+ :payments-transfered-to-user-because-of-peer-review {
+
+                                                      :action "/admin/process-input/"
+                                                      :fields [
+                                                               {
+                                                                :name :user-item-name
+                                                                :type :hyperlink-value
+                                                                :important-to-show-in-lists true
+                                                                }   
+                                                               {
+                                                                :name :amount
+                                                                :type :currency
+                                                                :note "Every transfer to a user account from the Peer Review Fund."
+                                                                :datatype :decimal
+                                                                :important-to-show-in-lists true
+                                                                }
+                                                               ]
+                                                      :validations [
+                                                                    [:required [:item-name :item-type :amount :user-item-name]]
+                                                                    ]
+                                                      :values {
+                                                               :community-item-name "all"
+                                                               :item-type :payments-transfered-to-user-because-of-peer-review 
+                                                               } 
+                                                      :enctype "multipart/form-data"                                                    
+                                                      }
+
+ :payments-transfered-to-user-for-refund-of-questions {
+
+                                                       :action "/admin/process-input/"
+                                                       :fields [
+                                                                {
+                                                                 :name :user-item-name
+                                                                 :type :hyperlink-value
+                                                                 :important-to-show-in-lists true
+                                                                 }
+                                                                {
+                                                                 :name :question-item-name
+                                                                 :type :hyperlink-value
+                                                                 :important-to-show-in-lists true
+                                                                 }
+                                                                {
+                                                                 :name :amount
+                                                                 :type :currency
+                                                                 :note "If a user requests a refund for a question, and we grant it, then we must transfer our $1 fee back to their account."
+                                                                 :datatype :decimal
+                                                                 :important-to-show-in-lists true
+                                                                 }                                                  
+                                                                ]
+                                                       :validations [
+                                                                     [:required [:item-name :item-type :amount :question-item-name :user-item-name]]
+                                                                     ]
+                                                       :values {
+                                                                :community-item-name "all"
+                                                                :item-type :payments-transfered-to-user-for-refund-of-questions
+                                                                } 
+                                                       :enctype "multipart/form-data"                                         
+                                                       }
+
+ :payment-outgoing-for-user-withdrawal {
+
+                                        :action "/admin/process-input/"
+                                        :fields [
+                                                 {
+                                                  :name :user-item-name
+                                                  :type :hyperlink-value
+                                                  :important-to-show-in-lists true
+                                                  }
+                                                 {
+                                                  :name :amount
+                                                  :type :currency
+                                                  :note "Payments that we actually send, via PayPal or snail mail paper check, to the user, as they withdraw money from their account."
+                                                  :datatype :decimal
+                                                  :important-to-show-in-lists true
+                                                  }
+                                                 {
+                                                  :name :paypal_transaction_id
+                                                  }
+                                                 ]
+                                        :validations [
+                                                      [:required [:item-name :item-type :amount :user-item-name]]
+                                                      ]
+                                        :values {
+                                                 :community-item-name "all"
+                                                 :item-type :payment-outgoing-for-user-withdrawal 
+                                                 } 
+                                        :enctype "multipart/form-data"                                        
+                                        }
+
+ :questions {
+
+             :action "/admin/process-input/"
+             :fields [
+                      {
+                       :name :user-item-name
+                       :type :hyperlink-value
+                       :important-to-show-in-lists true
+                       } 
+                      {
+                       :name :status
+                       :note " :status "
+                       }
+                      {
+                       :name :subject
+                       :note " :subject "
+                       :important-to-show-in-lists true
+                       }
+                      {
+                       :name :description
+                       :type :textarea
+                       :note " :description "
+                       }
+                      {
+                       :name :prize-amount
+                       :type :currency
+                       :note " :prize-amount "
+                       :datatype :decimal
+                       :important-to-show-in-lists true
+                       }
+                      {
+                       :name :start-at
+                       :note " :start-at "
+                       :year-start 1950
+                       :year-end 2030
+                       :important-to-show-in-lists true
+                       :datatype :date
+                       :ampm false
+                       :seconds false
+                       :timezone "US/Eastern"
+                       }
+                      {
+                       :name :end-at
+                       :note " :end-at "
+                       :year-start 1950
+                       :year-end 2030
+                       :important-to-show-in-lists true
+                       :datatype :date
+                       :ampm false
+                       :seconds false
+                       :timezone "US/Eastern"
+                       }
+                      {
+                       :name :image
+                       :note " :image "
+                       }
+                      {
+                       :name :refund-requested
+                       :note " :refund-requested "
+                       }
+                      {
+                       :name :refund-request-explanation
+                       :note " :refund-request-explanation "
+                       }
+                      {
+                       :name :refund-requested-date
+                       :note " :refund-requested-date "
+                       }
+                      {
+                       :name :voting-starts
+                       :note " :voting-started-at "
+                       }
+                      {
+                       :name :refund-amount
+                       :type :currency
+                       :note " :refund-amount "
+                       :datatype :decimal
+                       }
+                      {
+                       :name :session-id-when-question-was-created
+                       :note " :session-id-when-question-was-created "
+                       }
+                      {
+                       :name :email-has-been-sent
+                       :type :radios
+                       :datatype :boolean
+                       :options [true false]
+                       :note " an email has been sent to subscribers letting them know this question was posted "
+                       
+                       }                           
+                      ]
+             :validations [
+                           [:required [:item-name :item-type :subject :user-item-name :community-item-name]]
+                           ]
+             :values {
+                      :item-type :questions 
+                      } 
+             :enctype "multipart/form-data"              
+             }
+
+ :recommendations {
+
+                   :action "/admin/process-input/"
+                   :fields [
+                            {
+                             :name :user-item-name
+                             :type :hyperlink-value
+                             :important-to-show-in-lists true
+                             }
+                            {
+                             :name :url
+                             :note "The URL of the thing being recommended"
+                             }
+                            {
+                             :name :title
+                             :note "Once a month, top experts are allowed to post a recommendation, which might involve self-promotion, or might simply be something they wish to bring to the attention of the community. No more than 300 characters in the title."
+                             :important-to-show-in-lists true
+                             }
+                            ]
+                   :validations [
+                                 [:required [:item-name :item-type :user-item-name :url :title]]
+                                 [:web-url [:url]]
+                                 [:max-length 300 :title]
+                                 ]
+                   :values {
+                            :item-type :recommendations 
+                            } 
+                   :enctype "multipart/form-data"
+                   }
+
+ :refund-challenges {
+
+                     :action "/admin/process-input/"
+                     :fields [
+                              {
+                               :name :user-item-name
+                               :type :hyperlink-value
+                               :important-to-show-in-lists true
+                               } 
+                              {
+                               :name :description
+                               :type :textarea
+                               :note "Explain why, or why not, this refund request should be granted."
+                               }
+                              ]
+                     :validations [
+                                   [:required [:item-name :item-type :user-item-name :description]]
+                                   ]
+                     :values {
+                              :community-item-name "all"
+                              :item-type :refund-challenges 
+                              } 
+                     :enctype "multipart/form-data"
+                     }
+
+ :users {
+
+         :action "/admin/process-input/"
+         :fields [
+                  {
+                   :name :password
+                   :type :password
+                   }
+                  {
+                   :name :first-name
+                   :note " :first-name "
+                   :important-to-show-in-lists true
+                   }
+                  {
+                   :name :last-name
+                   :note " :last-name "
+                   :important-to-show-in-lists true
+                   }
+                  {
+                   :name :email
+                   :type :email
+                   :note "  email "
+                   :important-to-show-in-lists true
+                   }
+                  {
+                   :name :url
+                   :note "Please include 'http' or 'https' as part of the URL. "
+                   }
+                  {
+                   :name :description
+                   :type :textarea
+                   :note " :description "
+                   }
+                  {
+                   :name :cash-total
+                   :note " :cash-total "
+                   }
+                  {
+                   :name :twitter-address
+                   :note " :twitter-address "
+                   }
+                  {
+                   :name :landing-page
+                   :note " :landing-page "
+                   }
+                  {
+                   :name :payoneer-email
+                   :type :email
+                   :note " :payoneer-email "
+                   }
+                  {
+                   :name :subscribe-to-questions-via-email
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " If true, then the user wants to be sent an email, every time someone posts a question. "
+                   }
+                  {
+                   :name :clients-can-contact
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " This user does not mind if people want to contact them to offer them jobs. "
+                   }
+                  {
+                   :name :country
+                   :type :country-ad-hoc
+                   :note " :country "
+                   }
+                  {
+                   :name :city
+
+                   :note " :city "
+                   }
+                  {
+                   :name :paypal-email
+                   :type :email
+                   :note " Optional, but if you put an email here, we will send your whole account balance to this address, every night. "
+                   }
+                  {
+                   :name :do-not-notify-regarding-community-pot
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   
+                   :note " do-not-notify-regarding-community-pot "
+                   }
+                  {
+                   :name :subscribe-to-all-discourse
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note "  Do you want email notifcation of all discourse posted to this website? "
+                   }
+                  {
+                   :name :is-allowed-to-vote
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " This user is allowed to vote (on money, answers, discourse, etc) "
+                   }
+                  {
+                   :name :is-top-winner
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " :is-top-winner "
+                   }
+                  {
+                   :name :is-top-monthly-winner
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " Is this user one of the top winners of the last 30 days? "
+                   }
+                  {
+                   :name :is-monthly-asker
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " Has this person asked a question in the last month?  "
+                   }
+                  {
+                   :name :is-asker
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " Has this person ever paid to ask a question? "
+                   }
+                  {
+                   :name :is-winner
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note " :is-winner "
+                   }
+                  {
+                   :name :is-true-elite                   
+                   :note " Is one of the top experts? "
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   }
+                  {
+                   :name :is-allowed-to-post-recommendations
+                   :note " Is allowed to post recommendations? (Top experts and top donors can post 1 reccomendation a month.) "
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   }
+                  {
+                   :name :top-winner-bio
+                   :note " :top-winner-bio "
+                   }
+                  {
+                   :name :is-top-asker
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   
+                   :note " Is top asker? (is this person one of our best customers?) "
+                   }
+                  {
+                   :name :netvotes-90-days
+                   :note " :netvotes-this-month "
+                   :datatype :int
+                   }
+                  {
+                   :name :netvotes-this-month
+                   :note " :netvotes-this-month "
+                   :datatype :int
+                   }
+                  {
+                   :name :netvotes-all-time
+                   :note " :netvotes-all-time "
+                   :datatype :int
+                   }
+                  {
+                   :name :is-good-citizen
+                   :type :radios
+                   :datatype :boolean
+                   :options [true false]
+                   :note "  Is this user a Good Citizen (votes often)? "
+                   }
+                  {
+                   :name :html-and-css-for-discourse-page
+                   :note "You can create your own HTML and CSS for your discourses page."
+                   }
+                  {
+                   :name :gift-credit-cash-fund
+                   :type :currency
+                   :note "Sometimes TMA admins give gifts of credit to certain users, to encourage them to ask questions. We keep this credit in its own fund, so the user does not simply withdraw it. We don't want them to withdraw it, we want them to spent it on questions."
+                   :datatype :decimal
+                   }
+                  {
+                   :name :special-requests-for-handling-payments-for-owners-of-communities
+                   :note "If the owners of this community have special requests for TMA admins, they should record them here."
+                   }
+                  {
+                   :name :mailing-address
+                   :note "If the owners of this community want us to use snail mail to send them a paper check, they should put their street address here."
+                   }
+                  {
+                   :name :phone-number
+                   :note "A telephone number where we can reach the owner of the community. Please include the country code."
+                   }
+                  {
+                   :name :paypal-email-for-community-owners
+                   :type :email
+                   :note "If we are given a 'PayPal email for Community Owner', then we will send payments automatically, as soon as a question successfully concludes."
+                   }
+                  ]
+         :validations [
+                       [:required [:item-name :item-type :password]]
+                       [:email [:email]]
+                       [:web-url [:url]]
+                       ]
+         :values {
+                  :community-item-name "all"
+                  :item-type :users 
+                  } 
+         :enctype "multipart/form-data"          
+         }
+
+ :upvotes {
+
+           :action "/admin/process-input/"
+           :fields [
+                    {
+                     :name :user-item-name
+                     :type :hyperlink-value
+                     :important-to-show-in-lists true
+                     } 
+                    {
+                     :name :in-response-to-item-name
+                     :note "this is the id of the item that was voted for"
+                     }
+                    ]
+           :validations [
+                         [:required [:item-name :item-type :user-item-name]]
+                         ]
+           :values {
+                    :community-item-name "all"
+                    :item-type :upvotes 
+                    } 
+           :enctype "multipart/form-data"          
+           }
+
+ :downvotes {
+
+             :action "/admin/process-input/"
+             :fields [
+                      {
+                       :name :user-item-name
+                       :type :hyperlink-value
+                       :important-to-show-in-lists true
+                       } 
+                      {
+                       :name :in-response-to-item-name
+                       :note "this is the id of the item that was voted for"
+                       }
+                      ]
+             :validations [
+                           [:required [:item-name :item-type :user-item-name]]
+                           ]
+             :values {
+                      :community-item-name "all"
+                      :item-type :downvotes 
+                      } 
+             :enctype "multipart/form-data"          
+             }
+
+ :prize-votes {
+
+               :action "/admin/process-input/"
+               :fields [
+                        {
+                         :name :user-item-name
+                         :type :hyperlink-value
+                         :important-to-show-in-lists true
+                         } 
+                        {
+                         :name :question-item-name
+                         :note "this is the id of the item that was voted for"
+                         :important-to-show-in-lists true
+                         }
+                        {
+                         :name :amount
+                         :note "this is the amount of the money being voted"
+                         }
+                        ]
+               :validations [
+                             [:required [:item-name :item-type :user-item-name]]
+                             ]
+               :values {
+                        :community-item-name "all"
+                        :item-type :prize-votes 
+                        } 
+               :enctype "multipart/form-data"          
+               }
+
+ :subscriptions {
+                 :action "/admin/process-input/"
+                 :fields [
+                          {
+                           :name :in-response-to-item-name
+                           :note "this is the item that has been subscribed to, either a discourse or a question that people want follow up emails about"
+                           :important-to-show-in-lists true
+                           }
+                          {
+                           :name :user-item-name
+                           :type :hyperlink-value
+                           }
+                          ]
+                 :validations [
+                               [:required [:item-name :item-type :user-item-name]]
+                               ]
+                 :values {
+                          :community-item-name "all"
+                          :item-type :subscriptions
+                          } 
+                 :enctype "multipart/form-data"          
+                 }
+
+
+ }
