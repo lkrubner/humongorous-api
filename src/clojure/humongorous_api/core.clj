@@ -1,42 +1,28 @@
-(ns humongorous-api.core  
-  (:import [org.apache.commons.daemon Daemon DaemonContext])
-  (:gen-class
-   :implements [org.apache.commons.daemon.Daemon])
+(ns humongorous-api.core
+  (:gen-class)
   (:require
-   [humongorous-api.supervisor :as su]
-   [humongorous-api.server :as sr]
-   [taoensso.timbre :as tb]))
+   [humongorous-api.supervisor-stop :as stop]
+   [humongorous-api.supervisor-start :as start]))
 
 
-(def command-line-arguments (atom []))
 
-(defn init [args]
-  (swap! command-line-arguments (fn [old-vector] (conj old-vector args))))
-
+;; what you would call from the REPL to re-initate the app
 (defn start []
-  (try 
-    (sr/start (first @command-line-arguments))
-    (catch Exception e (tb/log e))))
+  (start/start))
 
-
-;; org.apache.commons.daemon implementation
-
-(defn -init [this ^DaemonContext context]
-  (init (.getArguments context)))
-  
-(defn -start [this]
-  (future (start)))
-
-(defn -stop [this]
-  (sr/stop))
+(defn stop []
+  (stop/stop))
 
 
 ;; Enable command-line invocation
-
 (defn -main [& args]
-  (init args)
-  (start))
-
+  (try
+    (.addShutdownHook (Runtime/getRuntime)
+                      (Thread.
+                       #(do (println "humongorous-api is shutting down")
+                            (stop))))
+    (start)
+    (catch Exception e (println e))))
 
 
 

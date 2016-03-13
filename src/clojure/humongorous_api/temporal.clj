@@ -1,4 +1,4 @@
-(ns humongorous-api.dates
+(ns humongorous-api.temporal
   (:import
    (java.text SimpleDateFormat)
    (java.util Date)

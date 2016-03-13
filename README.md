@@ -2,6 +2,49 @@
 
 humongorous-api  provides endpoints to our front Javascript to enable all CRUD operations via Ajax. It also provides some minimal data conversions, for instance, one of the frontenders wanted to save JSON objects with field names such as $$hashKey, and dollar signs are reserved in MongoDB, so we convert $ to * when saving and we convert * to $ when we are fetching.
 
+
+
+
+
+
+
+
+
+
+## Routes
+
+We expect routes to look like one of these:
+
+ANY "/"
+
+GET "/generate" 
+
+GET ":token/:name-of-collection/:document-id" 
+
+POST ":token/:name-of-collection/:document-id" 
+
+DELETE ":token/:name-of-collection/:document-id" 
+
+GET ":token/:name-of-collection" 
+
+PUT ":token/:name-of-collection" 
+
+DELETE ":token/:name-of-collection" 
+
+GET ":token/:name-of-collection/page/:page-id" 
+
+DELETE ":token/:name-of-collection/page/:page-id" 
+
+GET ":token/:name-of-collection/match-field/:match-field/match-value/:match-value" 
+
+GET ":token/:name-of-collection/match-field/:match-field/match-value/:match-value/page/:page-id" 
+
+GET ":token/:name-of-collection/sort/:field-to-sort-by" 
+
+GET ":token/:name-of-collection/sort/:field-to-sort-by/page/:page-id" 
+
+
+
 ## Our RESTful Philosophy
 
 For our purposes, CRUD maps to HTTP verbs like this: 

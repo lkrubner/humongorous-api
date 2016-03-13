@@ -1,23 +1,18 @@
 (ns humongorous-api.server
   (:import
-   [java.net URL]
-   [java.util UUID])
+   [java.net URL])
   (:require
-   [humongorous-api.controller :as controller]
-   [humongorous-api.perpetual :as perpetual]
-   [humongorous-api.startup :as startup]
    [humongorous-api.tokens :as tokens]
-   [humongorous-api.dates :as dt]
-   [compojure.core :refer :all]
-   [compojure.handler :as handler]
-   [compojure.route :as route]
-   [me.raynes.fs :as fs]
-   [liberator.core :refer [resource defresource]]
-   [ring.util.response :as rr]
-   [taoensso.timbre :as timbre]
+   [humongorous-api.supervisor-message-queue :as queue]
+   [humongorous-api.middleware :as middleware]
+   [cheshire.core :refer :all]
    [clojure.java.io :as io]
-   [clojure.string :as st])
+   [clojure.string :as st]
+   [cheshire.core :as cheshire]
+   [manifold.deferred :as deferred])
   (:use
+   [humongorous-api.problems]
+   [humongorous-api.errors]
    [ring.middleware.params]
    [ring.middleware.keyword-params]
    [ring.middleware.multipart-params]
@@ -26,156 +21,80 @@
    [ring.middleware.resource]
    [ring.middleware.content-type]
    [ring.adapter.jetty :only [run-jetty]]
-   [ring.middleware.json]))
+   [ring.middleware.json]
+   [clojure.walk]))
 
 
+
+(defn walk-deep-structure [next-item function-to-transform-values]
+  (postwalk
+   (fn [%]
+     (if (and (vector? %) (= (count %) 2) (keyword? (first %)))
+       [(function-to-transform-values %) (second %)]
+       %))
+   next-item))
+
+(defn walk-deep-structure-for-values [next-item function-to-transform-values]
+  (postwalk
+   (fn [%]
+     (if (and (vector? %) (= (count %) 2) (keyword? (first %)))
+       [(first %) (function-to-transform-values %)]
+       %))
+   next-item))
+
+(defn prepare-for-json [seq-or-entry]
+  (reduce
+   (fn [vector-of-strings next-document]
+     ;; need to avoid: 
+     ;; java.lang.Exception: Don't know how to write JSON of class org.bson.types.ObjectId
+     (let [next-document (assoc next-document "_id" (str (get next-document "_id")))]
+       (conj vector-of-strings next-document)))
+   []
+   seq-or-entry))
 
 (defn intro []
-  (assoc
-      (ring.util.response/response "See documentation here: https://github.com/lkrubner/humongorous-api")
-    :headers {"Content-Type" "text/plain"}))
+  {:status 200
+   :headers {"Content-Type" "text/plain"}
+   :body "See documentation here: https://github.com/lkrubner/humongorous-api"})
 
-(defn get-token [request]
-  (assoc
-      (ring.util.response/response (str "{ token: " (tokens/create-token) " }"))
-    :headers {"Content-Type" "application/json"}))
+(defn generate []
+  {:status 200
+   :headers {"Content-Type" "application/json"}
+   :body (cheshire/generate-string {:token  (tokens/create-token)})})
 
-(defn invalid-token [request]
-  (assoc
-      (ring.util.response/response (str "{ error : \"Invalid token\", request: " (str request) " }"))
-    :headers {"Content-Type" "application/json"}))
+(defn not-found []
+  {:status 404
+   :headers {"Content-Type" "text/plain"}
+   :body "We could not find the page you were looking for. See documentation here: https://github.com/lkrubner/humongorous-api"})
 
-(defn wrap-cors-headers
-  "Adding CORS headers to all responses, so the frontenders can make cross-domain requests"
-  [handler & [opts]]
-  (fn [request]
-    (let [resp (handler request)
-          origin (get-in request [:headers "origin"])
-          origin (if (or (= origin "null") (nil? origin))
-                   "*"
-                   origin)
-          resp (rr/header resp "Content-Type" "application/json")
-          resp (rr/header resp "Access-Control-Allow-Origin" (str origin))
-          resp (rr/header resp "Access-Control-Allow-Methods" "PUT, DELETE, POST, GET, OPTIONS, XMODIFY")
-          resp (rr/header resp "Access-Control-Max-Age" "4440")
-          resp (rr/header resp "Access-Control-Allow-Credentials" "true")
-          resp (rr/header resp "Access-Control-Allow-Headers" "Authorization, X-Requested-With, Content-Type, Origin, Accept")]
-      (timbre/log :trace "In wrap-cors-headers, the origin is: " origin " and the request method is " (get-in request [:request-method])) 
-      resp)))
+(defn service [simple-uri]
+  (cond
+    (= simple-uri "generate") (generate)
+    (= simple-uri "") (intro)
+    (= simple-uri nil) (intro)
+    :default (not-found)))
 
-(defn wrap-token-check
-  "Enforcing a limit on how many requests a user can make before they get a new token"
-  [handler & [opts]]
-  (fn [request]
-    (if (tokens/is-valid? request)
-      (do
-        (tokens/increment-token (:token request))
-        (handler request))
-      (invalid-token request))))
+(defn fetch [request]
+  "We use a deferred to ensure that the database request does not run on the main thread, but then we block on the response and send back the end result."
+  (let [eventual-result (deferred/deferred)]
+    (queue/enqueue request eventual-result)
+    (cheshire/generate-string @eventual-result {:pretty true})))
 
-(defn wrap-token
-  "Let's make sure that the token is in the request, even before the middleware is done processing, so the token is available to other middleware."
-  [handler & [opts]]
-  (fn [request]
-    (let [uri (:uri request)
-          uri-parts (clojure.string/split uri #"/")
-          token (get uri-parts 2)
-          request (assoc-in request [:json-params :token] token)]
-      (handler request))))
-
-(defn wrap-transaction-id
-  "Each request to this app needs to have a unique-id, due in part to the many forms of indirection that the Liberator library forces upon us. We use this transaction id to find a document we might be saving to the database, so we can return it to the user."
-  [handler & [opts]]
-  (fn [request]
-    (handler (assoc-in request  [:json-params :transaction-id] (str (java.util.UUID/randomUUID))))))
-
-;; a helper to create an absolute url for the entry with the given id
-(defn build-entry-url [request]
-  (if (get-in request [:params :document-id])
-    (URL. (format "%s://%s:%s%s/%s"
-                  (name (:scheme request))
-                  (:server-name request)
-                  (:server-port request)
-                  (:uri request)
-                  (get-in request [:params :document-id])))
-    (URL. (format "%s://%s:%s%s"
-                  (name (:scheme request))
-                  (:server-name request)
-                  (:server-port request)
-                  (:uri request)))))
-
-;; For PUT and POST check if the content type is json.
-(defn check-content-type [ctx content-types-we-allow]
-  (if (#{:put :post} (get-in ctx [:request :request-method]))
-    (let [vector-of-headers-sent-by-client (st/split (get-in ctx [:request :headers "content-type"]) #";")]
-      (or
-       (not (every? nil? (map #(some #{%} content-types-we-allow) vector-of-headers-sent-by-client)))
-       [false {:message "Unsupported Content-Type"}]))
-    true))
-
-
-(defresource collection-resource
-  :available-media-types ["application/json"]
-  :allowed-methods [:get :put]
-  :known-content-type? #(check-content-type % ["application/json"])
-  :malformed? #(controller/request-malformed? % ::data)
-  :location #(build-entry-url (get % :request))
-  :respond-with-entity? true
-  :multiple-representations? false
-  :new? (fn [ctx]
-          (controller/is-document-created? ctx))
-  :handle-created (fn [ctx]
-                    (controller/document-created ctx))
-  :put! (fn [ctx]
-          (timbre/log :trace " now we are in collection-resource :put! ")
-          (controller/document-resource-put! ctx))
-  :handle-ok (fn [ctx]
-               (timbre/log :trace " now we are in collection-resource :handle-ok")
-               (controller/collection-resource-handle-ok ctx)))
-
-(defresource document-resource 
-  :allowed-methods [:get :post :put :delete]
-  :known-content-type? #(check-content-type % ["application/json"])
-  :exists? (fn [ctx] true)
-  :existed? (fn [ctx] (controller/document-resource-existed? ctx))
-  :available-media-types ["application/json"]
-  :respond-with-entity? true
-  :malformed? #(controller/request-malformed? % ::data)
-  :can-put-to-missing? true
-  :multiple-representations? false
-  :can-post-to-missing? true
-  :new? (fn [ctx] (if (= (get-in ctx [:request :method]) :post) false true))
-  :handle-ok (fn [ctx]
-               (timbre/log :trace " now we are in document-resource :handle-ok")
-               (controller/document-resource-handle-ok ctx))
-  :put! (fn [ctx]
-          (timbre/log :trace " now we are in document-resource put!")
-          (controller/document-resource-put! ctx))
-  :post! (fn [ctx]
-           (timbre/log :trace " now we are in document-resource :post!")
-           (controller/document-resource-post! ctx))
-  :delete! (fn [ctx]
-             (timbre/log :trace " now we are in document-resource :delete!")
-             (controller/document-resource-delete! ctx)))
-
-
-(defroutes app-routes
-  (ANY "/" [] (intro))
-  (GET "/token" request (get-token request))
-  (ANY "/v0.2/:token/:name-of-collection/sort/:field-to-sort-by/:offset-by-how-many/:return-how-many/match-field/:match-field/match-value/:match-value" [] collection-resource)  
-  (ANY "/v0.2/:token/:name-of-collection/match-field/:match-field/match-value/:match-value" [] collection-resource)
-  (ANY "/v0.2/:token/:name-of-collection/sort/:field-to-sort-by/:offset-by-how-many/:return-how-many" [] collection-resource)
-  (ANY "/v0.2/:token/:name-of-collection/:document-id" [] document-resource)
-  (ANY "/v0.2/:token/:name-of-collection" [] collection-resource)
-  (route/resources "/")
-  (route/not-found "Page not found. Check the http verb that you used (GET, POST, PUT, DELETE) and make sure you put a collection name in the URL, and possbly also a document ID."))
+(defn handler [request]
+  (clojure.pprint/pprint request)
+  (let [uri-parts (clojure.string/split (:uri request) #"/")]
+    (println "uri-parts" uri-parts)
+    (if (#{"generate" "intro" "" nil} (get uri-parts 1))
+      (service (get uri-parts 1))
+      (fetch request))))
 
 (def app
-  (-> app-routes
-      (wrap-transaction-id)
-      (wrap-token)
-      (wrap-token-check)
-      (wrap-cors-headers)
+  (-> handler
+      (middleware/wrap-transaction-id)
+      (middleware/wrap-token)
+      (middleware/wrap-token-check)
+      (middleware/wrap-json-body)
+      (middleware/wrap-cors-headers)
       (wrap-keyword-params)
       (wrap-multipart-params)
       (wrap-nested-params)
@@ -183,28 +102,15 @@
       (wrap-json-params)
       (wrap-content-type)))
 
-(defmacro start-perpetual-events []
-  `(do ~@(for [i (map first (ns-publics 'humongorous-api.perpetual))]
-           `(~(symbol (str "perpetual/" i))))))
-
-(defmacro start-startup-events []
-  `(do ~@(for [i (map first (ns-publics 'humongorous-api.startup))]
-           `(~(symbol (str "startup/" i))))))
+(def server (atom :no-server-stored-yet))
 
 (defn start [args]
-  (try
-    (println "App 'humongorous-api' is starting.")
-    (println "If no port is specified then we will default to port 34000.")
-    (println "You can specify the port by starting it like this:")
-    (println "java -jar target/humongorous-api-0.1-standalone.jar 80")
-    (start-startup-events)
-    (start-perpetual-events)
-    (let [port (if (nil? (first args))
-                 34000
-                 (Integer/parseInt  (first args)))]
-      (timbre/log :trace (str "Starting the app at: " (dt/current-time-as-string)))
-      (def server (run-jetty #'app {:port port :join? false :max-threads 5000})))
-    (catch Exception e (println e))))
+  (let [port (if (nil? (first args))
+               34000
+               (Integer/parseInt  (first args)))
+        jetty (run-jetty #'app {:port port :join? false :max-threads 5000})]
+    (swap! server
+           (fn [old-server] jetty))))
 
 (defn stop []
-  (.stop server))
+  (.stop @server))
